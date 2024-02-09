@@ -13,8 +13,12 @@ class Profile(models.Model):
     ]
     status_flag = models.CharField(choices=status_choices, max_length=3, default='new', verbose_name='статус')
 
+
     def add_balance(self, amount):
-        Profile.objects.select_for_update().only('balance').filter(pk=self.pk).update(balance=F('balance') + amount)
+        Profile.objects.select_for_update().only('balance').filter(pk=self.pk)\
+            .update(balance=F('balance') + amount)
+        Profile.objects.select_for_update().only('balance').filter(pk=self.pk)\
+          .update(balance=F('balance') + amount)
 
     def sub_balance(self, amount):
         Profile.objects.select_for_update().only('balance').filter(pk=self.pk).update(balance=F('balance') - amount)
