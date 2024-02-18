@@ -1,8 +1,17 @@
 {% extends 'app_shop/base.html' %}
-
 {% block main %}
+{% if messages %}
+    {% for i_message in messages %}
+        <div class="alert  alert-succes alert-dismissible fade show" role="alert">
+            <strong>Payment!</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
     <h2>Average price in our marketplaces is {{avg_price|floatformat:2}} RUB. </h2>
     <div class="d-flex jusify-content-content mt-5">
+
         {% for i_good in goods %}
             <div class="card me-3" style="width: 18rem;">
                     <img src="{{i_good.image.url}}" class="card-img-top" alt="{{good.image}}">
@@ -12,10 +21,11 @@
                         <h6>{{i_good.shop.name}}</h6>
                         <p class="card-text">{{i_good.description| truncatewords:10}}</p>
                         <p>{{i_good.price}} RUB.</p>
-                        <form method="post", action="">
+                        <form method="post", action="{% url 'add_good' i_good.pk %}">
                             {% csrf_token %}
                             {{add_form.good_num}}
                             <button type="submit" class="btn btn-primary">Add to cart</button>
+
                         </form>
                     </div>
              </div>
