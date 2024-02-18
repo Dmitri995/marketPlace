@@ -14,13 +14,17 @@
                     <span>Price: {{item.good.price}} RUB.</span>
                     <span>Quantity: {{item.good_num}}</span>
                     <span>Total: {% widthratio item.good.price 1 item.good_num %} RUB.</span>
+                    <form method="post" action="{% url 'delete_cart' item.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Delete</button>
+                    </form>
                 </div>
             {% endfor %}
         </div>
         <h3>Total price {{total_price}} RUB.</h3>
         <form method="post" action="{% url 'pay' request.user.pk %}">
             {%  csrf_token %}
-            <button class="btn btn-primary">Pay</button>
+            <button type="submit" class="btn btn-primary">Pay</button>
         </form>
     {% else %}
     <h4>No goods in cart</h4>

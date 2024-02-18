@@ -16,6 +16,7 @@ from datetime import datetime
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
+from huey.contrib.djhuey import task
 
 
 class UserUpdateView(UpdateView):
@@ -63,6 +64,7 @@ class CartView(LoginRequiredMixin, View):
         })
 @require_POST
 def pay(request, pk):
+
     profile = get_object_or_404(Profile, user=request.user)
     with transaction.atomic():
         cart = GoodCart.objects.filter(
@@ -89,14 +91,24 @@ def pay(request, pk):
 def add_good_to_cart(request, *args, **kwargs):
     good = get_object_or_404(Good, pk=kwargs['pk'])
     form = CartAddForm(request.POST)
+    user_cart, created = GoodCart.objects.get_or_create(user=request.user, good=good, payment_flag='n')
     if form.is_valid():
         good_num = form.cleaned_data['good_num']
-        if good_num == 0 or good_num > good.amount:
-            messages.add_message(request, messages.INFO, 'Invalid good num')
-            return redirect('main')
-        with transaction.atomic():
-            GoodCart.objects.create(good=good, user=request.user, good_num=good_num)
-            good.sub_amount(good_num)
+        if created:
+            if good_num == 0 or good_num > good.amount:
+                messages.add_message(request, messages.INFO, 'Invalid good num')
+                return redirect('main')
+            with transaction.atomic():
+                user_cart.good_num = good_num
+                user_cart.save()
+                good.sub_amount(good_num)
+        else:
+            if good_num <= 0 or good_num > good.amount:
+                messages.add_message(request, messages.INFO, 'Invalid good num')
+                return redirect('main')
+            with transaction.atomic():
+                user_cart.good_num += good_num
+                user_cart.save()
 
     return redirect('cart')
 
@@ -152,7 +164,13 @@ class RefillBalanceView(View):
             return redirect(reverse('main'))
         return render(request, self.template_name, {'form': form})
 
-
-
+@require_POST
+@login_required(login_url='login', redirect_field_name='main')
+def delete_cart(request, item_id):
+    item = get_object_or_404(GoodCart, id=item_id)
+    good = item.good
+    good.add_amount(item.good_num)
+    item.delete()
+    return redirect('cart')
 
 
